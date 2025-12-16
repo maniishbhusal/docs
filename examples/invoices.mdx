@@ -1,0 +1,243 @@
+---
+title: 'Invoice Generation'
+description: 'Generate professional invoices with Pdflet'
+---
+
+# Invoice Generation
+
+Generate professional, branded invoices from your application data.
+
+## Invoice Template
+
+Here's a complete HTML invoice template:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1a1a1a;
+      padding: 40px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+    .logo { font-size: 24px; font-weight: bold; color: #f05335; }
+    .invoice-title { font-size: 32px; color: #666; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .info-block h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+    th {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 2px solid #1a1a1a;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    .amount { text-align: right; }
+    .totals {
+      width: 300px;
+      margin-left: auto;
+    }
+    .totals tr td { border: none; padding: 8px 12px; }
+    .totals .total {
+      font-size: 18px;
+      font-weight: bold;
+      border-top: 2px solid #1a1a1a;
+    }
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Your Company</div>
+    <div class="invoice-title">INVOICE</div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-block">
+      <h3>Bill To</h3>
+      <p><strong>{{customer_name}}</strong></p>
+      <p>{{customer_address}}</p>
+      <p>{{customer_email}}</p>
+    </div>
+    <div class="info-block" style="text-align: right;">
+      <h3>Invoice Details</h3>
+      <p><strong>Invoice #:</strong> {{invoice_number}}</p>
+      <p><strong>Date:</strong> {{invoice_date}}</p>
+      <p><strong>Due Date:</strong> {{due_date}}</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>Qty</th>
+        <th class="amount">Unit Price</th>
+        <th class="amount">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each items}}
+      <tr>
+        <td>{{description}}</td>
+        <td>{{quantity}}</td>
+        <td class="amount">${{unit_price}}</td>
+        <td class="amount">${{amount}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <table class="totals">
+    <tr>
+      <td>Subtotal</td>
+      <td class="amount">${{subtotal}}</td>
+    </tr>
+    <tr>
+      <td>Tax (10%)</td>
+      <td class="amount">${{tax}}</td>
+    </tr>
+    <tr class="total">
+      <td>Total</td>
+      <td class="amount">${{total}}</td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    <p>Thank you for your business!</p>
+    <p>Payment is due within 30 days. Please include invoice number with payment.</p>
+  </div>
+</body>
+</html>
+```
+
+## Python Example
+
+```python
+import requests
+from jinja2 import Template
+
+# Your invoice data
+invoice_data = {
+    "customer_name": "Acme Corp",
+    "customer_address": "123 Business St, Suite 100",
+    "customer_email": "billing@acme.com",
+    "invoice_number": "INV-2024-001",
+    "invoice_date": "January 15, 2024",
+    "due_date": "February 14, 2024",
+    "items": [
+        {"description": "API Access - Pro Plan", "quantity": 1, "unit_price": "29.00", "amount": "29.00"},
+        {"description": "Additional Credits (1000)", "quantity": 2, "unit_price": "10.00", "amount": "20.00"},
+    ],
+    "subtotal": "49.00",
+    "tax": "4.90",
+    "total": "53.90"
+}
+
+# Load and render template
+with open("invoice_template.html") as f:
+    template = Template(f.read())
+
+html = template.render(**invoice_data)
+
+# Generate PDF
+response = requests.post(
+    "https://api.pdflet.dev/api/v1/pdf/",
+    headers={"X-API-Key": "pk_live_your_api_key"},
+    json={
+        "html": html,
+        "page_size": "Letter",
+        "margin_top": "0.5in",
+        "margin_bottom": "0.5in"
+    }
+)
+
+conversion_id = response.json()["id"]
+print(f"Invoice PDF queued: {conversion_id}")
+```
+
+## JavaScript Example
+
+```javascript
+import Handlebars from 'handlebars';
+import fs from 'fs';
+
+const invoiceData = {
+  customer_name: "Acme Corp",
+  customer_address: "123 Business St, Suite 100",
+  customer_email: "billing@acme.com",
+  invoice_number: "INV-2024-001",
+  invoice_date: "January 15, 2024",
+  due_date: "February 14, 2024",
+  items: [
+    { description: "API Access - Pro Plan", quantity: 1, unit_price: "29.00", amount: "29.00" },
+    { description: "Additional Credits (1000)", quantity: 2, unit_price: "10.00", amount: "20.00" },
+  ],
+  subtotal: "49.00",
+  tax: "4.90",
+  total: "53.90"
+};
+
+const templateSource = fs.readFileSync('invoice_template.html', 'utf8');
+const template = Handlebars.compile(templateSource);
+const html = template(invoiceData);
+
+const response = await fetch('https://api.pdflet.dev/api/v1/pdf/', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': 'pk_live_your_api_key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    html,
+    page_size: 'Letter',
+    margin_top: '0.5in',
+    margin_bottom: '0.5in'
+  })
+});
+
+const { id } = await response.json();
+console.log(`Invoice PDF queued: ${id}`);
+```
+
+## Tips for Better Invoices
+
+<CardGroup cols={2}>
+  <Card title="Use web fonts" icon="font">
+    Include Google Fonts via `@import` for professional typography
+  </Card>
+  <Card title="Print-friendly CSS" icon="print">
+    Use `@media print` for PDF-specific styles
+  </Card>
+  <Card title="Fixed dimensions" icon="ruler">
+    Use absolute units (px, cm, in) for consistent layout
+  </Card>
+  <Card title="Embed images as base64" icon="image">
+    Inline images with data URIs for reliable rendering
+  </Card>
+</CardGroup>

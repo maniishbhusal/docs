@@ -1,0 +1,69 @@
+---
+title: 'Introduction'
+description: 'Convert HTML to PDF with a simple API'
+---
+
+# Welcome to Pdflet
+
+Pdflet is a PDF generation API built for developers. Convert HTML to high-quality PDFs with a single API call.
+
+## Why Pdflet?
+
+<CardGroup cols={2}>
+  <Card title="Simple Integration" icon="code">
+    One POST request to convert HTML to PDF. No complex setup or configuration required.
+  </Card>
+  <Card title="High Quality Output" icon="file-pdf">
+    Powered by Chromium for pixel-perfect rendering. Your PDFs look exactly like your HTML.
+  </Card>
+  <Card title="Fast & Reliable" icon="bolt">
+    Average conversion time under 3 seconds. 99.9% uptime SLA on paid plans.
+  </Card>
+  <Card title="Developer First" icon="terminal">
+    RESTful API with comprehensive documentation. SDKs for Python, JavaScript, and more.
+  </Card>
+</CardGroup>
+
+## Common Use Cases
+
+- **Invoices & Receipts** - Generate professional invoices from your billing data
+- **Reports** - Create PDF reports from dashboards and analytics
+- **Contracts** - Convert dynamic contracts and agreements to PDF
+- **Certificates** - Generate certificates, tickets, and badges at scale
+
+## How It Works
+
+<Steps>
+  <Step title="Send HTML">
+    POST your HTML content or URL to our API endpoint
+  </Step>
+  <Step title="We Render">
+    Our servers render your HTML using a headless browser
+  </Step>
+  <Step title="Get PDF">
+    Download your PDF from the returned URL
+  </Step>
+</Steps>
+
+## Quick Example
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/pdf/ \
+  -H "X-API-Key: pk_live_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{"html": "<h1>Hello World</h1>"}'
+```
+
+Response:
+
+```json
+{
+  "id": "conv_abc123",
+  "status": "pending",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+<Card title="Ready to start?" icon="rocket" href="/quickstart">
+  Follow our quickstart guide to generate your first PDF in 5 minutes
+</Card>

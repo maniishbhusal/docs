@@ -1,0 +1,176 @@
+---
+title: 'Python'
+description: 'Python code examples for Pdflet API'
+---
+
+# Python Examples
+
+Python code examples using the `requests` library.
+
+## Installation
+
+```bash
+pip install requests
+```
+
+## Configuration
+
+```python
+import requests
+import os
+
+PDFLET_API_KEY = os.environ.get("PDFLET_API_KEY")
+BASE_URL = "https://api.pdflet.dev/api/v1"
+
+headers = {
+    "X-API-Key": PDFLET_API_KEY,
+    "Content-Type": "application/json"
+}
+```
+
+## Generate PDF
+
+```python
+def create_pdf(html: str, **options) -> dict:
+    """Create a PDF from HTML content."""
+    response = requests.post(
+        f"{BASE_URL}/pdf/",
+        headers=headers,
+        json={"html": html, **options}
+    )
+    response.raise_for_status()
+    return response.json()
+
+# Usage
+result = create_pdf(
+    html="<h1>Hello World</h1>",
+    page_size="A4",
+    margin_top="2cm"
+)
+print(f"Conversion ID: {result['id']}")
+```
+
+## Wait for Completion
+
+```python
+import time
+
+def wait_for_pdf(conversion_id: str, timeout: int = 60) -> str:
+    """Poll until PDF is ready and return the download URL."""
+    start = time.time()
+
+    while time.time() - start < timeout:
+        response = requests.get(
+            f"{BASE_URL}/conversions/{conversion_id}/",
+            headers=headers
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if data["status"] == "completed":
+            return data["file_url"]
+        elif data["status"] == "failed":
+            raise Exception(f"Conversion failed: {data.get('error_message')}")
+
+        time.sleep(1)
+
+    raise TimeoutError("PDF generation timed out")
+
+# Usage
+pdf_url = wait_for_pdf(result["id"])
+print(f"PDF ready: {pdf_url}")
+```
+
+## Download PDF
+
+```python
+def download_pdf(url: str, filename: str) -> None:
+    """Download a PDF to a local file."""
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+
+    with open(filename, "wb") as f:
+        f.write(response.content)
+
+    print(f"Downloaded: {filename}")
+
+# Usage
+download_pdf(pdf_url, "output.pdf")
+```
+
+## Complete Example
+
+```python
+import requests
+import time
+import os
+
+class PdfletClient:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.base_url = "https://api.pdflet.dev/api/v1"
+        self.headers = {
+            "X-API-Key": api_key,
+            "Content-Type": "application/json"
+        }
+
+    def html_to_pdf(self, html: str, **options) -> bytes:
+        """Convert HTML to PDF and return the PDF bytes."""
+        # Start conversion
+        response = requests.post(
+            f"{self.base_url}/pdf/",
+            headers=self.headers,
+            json={"html": html, **options}
+        )
+        response.raise_for_status()
+        conversion_id = response.json()["id"]
+
+        # Wait for completion
+        for _ in range(60):
+            status_response = requests.get(
+                f"{self.base_url}/conversions/{conversion_id}/",
+                headers=self.headers
+            )
+            status_response.raise_for_status()
+            data = status_response.json()
+
+            if data["status"] == "completed":
+                # Download PDF
+                pdf_response = requests.get(data["file_url"])
+                return pdf_response.content
+            elif data["status"] == "failed":
+                raise Exception(data.get("error_message", "Unknown error"))
+
+            time.sleep(1)
+
+        raise TimeoutError("Conversion timed out")
+
+# Usage
+client = PdfletClient(os.environ["PDFLET_API_KEY"])
+
+pdf_bytes = client.html_to_pdf(
+    html="<h1>Invoice #123</h1><p>Total: $99.00</p>",
+    page_size="Letter"
+)
+
+with open("invoice.pdf", "wb") as f:
+    f.write(pdf_bytes)
+```
+
+## Error Handling
+
+```python
+from requests.exceptions import HTTPError
+
+try:
+    result = create_pdf("<h1>Test</h1>")
+except HTTPError as e:
+    if e.response.status_code == 401:
+        print("Invalid API key")
+    elif e.response.status_code == 402:
+        print("No credits remaining")
+    elif e.response.status_code == 429:
+        print("Rate limit exceeded")
+    else:
+        print(f"Error: {e.response.json()}")
+```

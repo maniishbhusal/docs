@@ -1,0 +1,192 @@
+---
+title: 'JavaScript'
+description: 'JavaScript/Node.js code examples for Pdflet API'
+---
+
+# JavaScript Examples
+
+JavaScript examples for Node.js and browser environments.
+
+## Node.js Setup
+
+```javascript
+const PDFLET_API_KEY = process.env.PDFLET_API_KEY;
+const BASE_URL = 'https://api.pdflet.dev/api/v1';
+
+const headers = {
+  'X-API-Key': PDFLET_API_KEY,
+  'Content-Type': 'application/json'
+};
+```
+
+## Generate PDF
+
+```javascript
+async function createPdf(html, options = {}) {
+  const response = await fetch(`${BASE_URL}/pdf/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ html, ...options })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Usage
+const result = await createPdf('<h1>Hello World</h1>', {
+  page_size: 'A4',
+  margin_top: '2cm'
+});
+console.log(`Conversion ID: ${result.id}`);
+```
+
+## Wait for Completion
+
+```javascript
+async function waitForPdf(conversionId, timeout = 60000) {
+  const start = Date.now();
+
+  while (Date.now() - start < timeout) {
+    const response = await fetch(
+      `${BASE_URL}/conversions/${conversionId}/`,
+      { headers }
+    );
+
+    const data = await response.json();
+
+    if (data.status === 'completed') {
+      return data.file_url;
+    } else if (data.status === 'failed') {
+      throw new Error(data.error_message || 'Conversion failed');
+    }
+
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  throw new Error('Conversion timed out');
+}
+
+// Usage
+const pdfUrl = await waitForPdf(result.id);
+console.log(`PDF ready: ${pdfUrl}`);
+```
+
+## Complete Client Class
+
+```javascript
+class PdfletClient {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.baseUrl = 'https://api.pdflet.dev/api/v1';
+  }
+
+  get headers() {
+    return {
+      'X-API-Key': this.apiKey,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  async htmlToPdf(html, options = {}) {
+    // Start conversion
+    const createResponse = await fetch(`${this.baseUrl}/pdf/`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ html, ...options })
+    });
+
+    if (!createResponse.ok) {
+      const error = await createResponse.json();
+      throw new Error(error.message || 'Failed to create conversion');
+    }
+
+    const { id } = await createResponse.json();
+
+    // Poll for completion
+    for (let i = 0; i < 60; i++) {
+      const statusResponse = await fetch(
+        `${this.baseUrl}/conversions/${id}/`,
+        { headers: this.headers }
+      );
+
+      const data = await statusResponse.json();
+
+      if (data.status === 'completed') {
+        return data.file_url;
+      } else if (data.status === 'failed') {
+        throw new Error(data.error_message);
+      }
+
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    throw new Error('Conversion timed out');
+  }
+}
+
+// Usage
+const client = new PdfletClient(process.env.PDFLET_API_KEY);
+
+const pdfUrl = await client.htmlToPdf(
+  '<h1>Invoice #123</h1><p>Total: $99.00</p>',
+  { page_size: 'Letter' }
+);
+
+console.log(`PDF URL: ${pdfUrl}`);
+```
+
+## Download to File (Node.js)
+
+```javascript
+import fs from 'fs';
+import { pipeline } from 'stream/promises';
+
+async function downloadPdf(url, filename) {
+  const response = await fetch(url);
+  const fileStream = fs.createWriteStream(filename);
+  await pipeline(response.body, fileStream);
+  console.log(`Downloaded: ${filename}`);
+}
+
+// Usage
+await downloadPdf(pdfUrl, 'invoice.pdf');
+```
+
+## Browser Usage
+
+```javascript
+// In browser, download to user's device
+async function downloadPdfInBrowser(url, filename) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+
+  URL.revokeObjectURL(link.href);
+}
+```
+
+## Error Handling
+
+```javascript
+try {
+  const url = await client.htmlToPdf('<h1>Test</h1>');
+} catch (error) {
+  if (error.message.includes('401')) {
+    console.error('Invalid API key');
+  } else if (error.message.includes('402')) {
+    console.error('No credits remaining');
+  } else if (error.message.includes('429')) {
+    console.error('Rate limit exceeded - please slow down');
+  } else {
+    console.error('Error:', error.message);
+  }
+}
+```

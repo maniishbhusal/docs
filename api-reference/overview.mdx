@@ -1,0 +1,108 @@
+---
+title: 'API Overview'
+description: 'RESTful API conventions and base URL'
+---
+
+# API Overview
+
+The Pdflet API is a RESTful JSON API for generating PDFs from HTML content.
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.pdflet.dev/api/v1
+```
+
+## Request Format
+
+- All requests must include a `Content-Type: application/json` header
+- Request bodies must be valid JSON
+- Authentication is required for all endpoints
+
+## Response Format
+
+All responses return JSON with consistent structure:
+
+### Success Response
+
+```json
+{
+  "id": "conv_abc123",
+  "status": "completed",
+  "file_url": "https://api.pdflet.dev/media/pdfs/conv_abc123.pdf",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "validation_error",
+  "message": "Invalid page size",
+  "details": {
+    "page_size": ["Must be one of: A4, Letter, Legal, A3, A5"]
+  }
+}
+```
+
+## HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `201` | Created |
+| `202` | Accepted (async processing started) |
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Invalid or missing authentication |
+| `402` | Payment Required - No credits remaining |
+| `404` | Not Found - Resource doesn't exist |
+| `429` | Too Many Requests - Rate limit exceeded |
+| `500` | Internal Server Error |
+
+## Rate Limits
+
+Rate limits vary by plan:
+
+| Plan | Requests per Minute |
+|------|---------------------|
+| Free | 10 |
+| Starter | 30 |
+| Pro | 100 |
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 30
+X-RateLimit-Remaining: 29
+X-RateLimit-Reset: 1705320000
+```
+
+## Pagination
+
+List endpoints support pagination via query parameters:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `page` | 1 | Page number |
+| `page_size` | 20 | Items per page (max 100) |
+
+```bash
+GET /api/v1/api-keys/?page=2&page_size=10
+```
+
+## Idempotency
+
+For safe retries, include an `Idempotency-Key` header:
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/pdf/ \
+  -H "X-API-Key: pk_live_your_api_key" \
+  -H "Idempotency-Key: unique-request-id-123" \
+  -H "Content-Type: application/json" \
+  -d '{"html": "<h1>Hello</h1>"}'
+```
+
+Requests with the same idempotency key within 24 hours return the cached response.

@@ -1,0 +1,100 @@
+---
+title: 'Pricing'
+description: 'Plans and pricing for Pdflet'
+---
+
+# Pricing
+
+Simple, transparent pricing based on your usage.
+
+## Plans
+
+<CardGroup cols={3}>
+  <Card title="Free" icon="gift">
+    **$0/month**
+
+    - 100 credits/month
+    - 10 requests/minute
+    - Community support
+    - Perfect for testing
+  </Card>
+
+  <Card title="Starter" icon="rocket">
+    **$9/month**
+
+    - 1,000 credits/month
+    - 30 requests/minute
+    - Email support
+    - Great for side projects
+  </Card>
+
+  <Card title="Pro" icon="bolt">
+    **$29/month**
+
+    - 5,000 credits/month
+    - 100 requests/minute
+    - Priority support
+    - Built for production
+  </Card>
+</CardGroup>
+
+## What's a Credit?
+
+One credit = one PDF conversion. Simple as that.
+
+| Action | Credits |
+|--------|---------|
+| Convert HTML to PDF | 1 |
+| Convert URL to PDF | 1 |
+
+## Rate Limits
+
+Rate limits are per minute and reset every 60 seconds.
+
+| Plan | Requests/Minute |
+|------|-----------------|
+| Free | 10 |
+| Starter | 30 |
+| Pro | 100 |
+
+If you exceed your rate limit, you'll receive a `429 Too Many Requests` response. Wait for the limit to reset and retry.
+
+## Credit Rollover
+
+Credits do **not** roll over to the next month. Unused credits expire at the end of each billing period.
+
+## Upgrading
+
+Upgrade anytime from your [dashboard settings](https://pdflet.dev/dashboard?settings=billing). You'll be prorated for the current billing period.
+
+## Downgrading
+
+Downgrade takes effect at the end of your current billing period. You'll keep your current plan's limits until then.
+
+## Enterprise
+
+Need more than 5,000 credits/month or custom rate limits?
+
+<Card title="Contact Sales" icon="envelope" href="mailto:sales@pdflet.dev">
+  We'll create a custom plan for your needs
+</Card>
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What happens if I run out of credits?">
+    API requests will return a `402 Payment Required` error. Upgrade your plan or wait for the next billing cycle.
+  </Accordion>
+
+  <Accordion title="Can I buy additional credits?">
+    Not currently. If you need more credits, upgrade to a higher plan.
+  </Accordion>
+
+  <Accordion title="Is there a free trial for paid plans?">
+    The Free plan is essentially a permanent free trial. Try all features with 100 credits/month.
+  </Accordion>
+
+  <Accordion title="What payment methods do you accept?">
+    We accept all major credit cards via our payment processor.
+  </Accordion>
+</AccordionGroup>

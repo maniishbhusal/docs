@@ -1,0 +1,162 @@
+---
+title: 'cURL'
+description: 'cURL examples for testing the Pdflet API'
+---
+
+# cURL Examples
+
+Test the Pdflet API directly from your terminal.
+
+## Set Your API Key
+
+```bash
+export PDFLET_API_KEY="pk_live_your_api_key"
+```
+
+## Create PDF from HTML
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/pdf/ \
+  -H "X-API-Key: $PDFLET_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "html": "<html><body><h1>Hello World</h1><p>This is a test PDF.</p></body></html>"
+  }'
+```
+
+Response:
+
+```json
+{
+  "id": "conv_abc123",
+  "status": "pending",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+## Create PDF with Options
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/pdf/ \
+  -H "X-API-Key: $PDFLET_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "html": "<h1>Report</h1>",
+    "page_size": "Letter",
+    "landscape": true,
+    "margin_top": "1in",
+    "margin_bottom": "1in",
+    "margin_left": "0.5in",
+    "margin_right": "0.5in",
+    "print_background": true
+  }'
+```
+
+## Check Conversion Status
+
+```bash
+curl https://api.pdflet.dev/api/v1/conversions/conv_abc123/ \
+  -H "X-API-Key: $PDFLET_API_KEY"
+```
+
+Response (completed):
+
+```json
+{
+  "id": "conv_abc123",
+  "status": "completed",
+  "file_url": "https://api.pdflet.dev/media/pdfs/conv_abc123.pdf",
+  "created_at": "2024-01-15T10:30:00Z",
+  "completed_at": "2024-01-15T10:30:02Z"
+}
+```
+
+## Download PDF
+
+```bash
+curl -o output.pdf "https://api.pdflet.dev/media/pdfs/conv_abc123.pdf"
+```
+
+## Complete Workflow Script
+
+```bash
+#!/bin/bash
+
+# Create PDF
+RESPONSE=$(curl -s -X POST https://api.pdflet.dev/api/v1/pdf/ \
+  -H "X-API-Key: $PDFLET_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"html": "<h1>Hello World</h1>"}')
+
+CONVERSION_ID=$(echo $RESPONSE | jq -r '.id')
+echo "Conversion started: $CONVERSION_ID"
+
+# Poll for completion
+while true; do
+  STATUS_RESPONSE=$(curl -s \
+    "https://api.pdflet.dev/api/v1/conversions/$CONVERSION_ID/" \
+    -H "X-API-Key: $PDFLET_API_KEY")
+
+  STATUS=$(echo $STATUS_RESPONSE | jq -r '.status')
+
+  if [ "$STATUS" = "completed" ]; then
+    FILE_URL=$(echo $STATUS_RESPONSE | jq -r '.file_url')
+    echo "PDF ready: $FILE_URL"
+    curl -o output.pdf "$FILE_URL"
+    echo "Downloaded: output.pdf"
+    break
+  elif [ "$STATUS" = "failed" ]; then
+    echo "Conversion failed"
+    exit 1
+  fi
+
+  echo "Status: $STATUS - waiting..."
+  sleep 1
+done
+```
+
+## API Key Management
+
+### List API Keys
+
+```bash
+curl https://api.pdflet.dev/api/v1/api-keys/ \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+### Create API Key
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/api-keys/ \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Production Server"}'
+```
+
+### Delete API Key
+
+```bash
+curl -X DELETE https://api.pdflet.dev/api/v1/api-keys/key_abc123/ \
+  -H "Authorization: Bearer $JWT_TOKEN"
+```
+
+## Authentication
+
+### Get JWT Token
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/auth/jwt/create/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your@email.com",
+    "password": "your_password"
+  }'
+```
+
+### Refresh Token
+
+```bash
+curl -X POST https://api.pdflet.dev/api/v1/auth/jwt/refresh/ \
+  -H "Content-Type: application/json" \
+  -d '{"refresh": "your_refresh_token"}'
+```
